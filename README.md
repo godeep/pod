@@ -31,7 +31,7 @@ func main() {
 	http.Handle("/home", p.Fuse(YourHandler))
 
 	// And add some middleware on precise handler
-	http.Handle("/"), p.Fuse(YourOtherHandler).Add(OtherMiddle)) 
+	http.Handle("/", p.Fuse(YourOtherHandler).Add(OtherMiddle)) 
 
 	// Start Listening
 	http.ListenAndServe(":8080", nil)
