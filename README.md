@@ -4,7 +4,7 @@ Pod
 ## What is pod ?
 
 Pod is a simple Middleware chaining module, compatible with
-every mux who are compatible with ` http.Handler `.
+every mux who respect the ` http.Handler ` interface.
 
 ## Features
 
