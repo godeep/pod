@@ -3,13 +3,14 @@ package main
 import (
 	"net/http"
 
+	"github.com/squiidz/fur/middle"
 	"github.com/squiidz/pod"
 )
 
 func main() {
 	p := pod.NewPod()
 
-	p.Glob(GlobalMiddle)
+	p.Glob(GlobalMiddle, middle.Logger)
 
 	http.Handle("/home", p.Fuse(HomeHandler).Add(HomeMiddle))
 

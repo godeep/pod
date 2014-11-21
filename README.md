@@ -9,6 +9,7 @@ every mux who respect the ` http.Handler ` interface.
 ## Features
 
 - Use Standard ` func (rw http.ResponseWriter, req *http.Request) ` as Middleware.
+- Support also ` func (http.Handler) http.Handler ` signature.
 - Middleware Chaining.
 - Global Middleware declaration.
 - Standard Lib compatibily
