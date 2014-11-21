@@ -12,7 +12,7 @@ func main() {
 
 	p.Glob(GlobalMiddle, middle.Logger)
 
-	http.Handle("/home", p.Fuse(HomeHandler).Add(HomeMiddle))
+	http.Handle("/home", p.Fuse(HomeHandler).Add(HomeMiddle, Middle))
 
 	http.ListenAndServe(":8080", nil)
 }
@@ -27,4 +27,11 @@ func HomeHandler(rw http.ResponseWriter, req *http.Request) {
 
 func HomeMiddle(rw http.ResponseWriter, req *http.Request) {
 	rw.Write([]byte("- HomeMiddleware\n"))
+}
+
+func Middle(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte("- Middle\n"))
+		next.ServeHTTP(rw, req)
+	})
 }
