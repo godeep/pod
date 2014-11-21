@@ -4,11 +4,6 @@ import (
 	"net/http"
 )
 
-// PodHandler redefine http.Handler
-type PodHandler interface {
-	ServeHTTP(http.ResponseWriter, *http.Request)
-}
-
 // PodFunc redefine http.HandlerFunc
 type PodFunc http.HandlerFunc
 
@@ -17,7 +12,7 @@ func (h PodFunc) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 // Middleware is the signature of a valid middleware with Pod
-type MiddleWare func(PodHandler) PodHandler
+type MiddleWare func(http.Handler) http.Handler
 
 // Pod is the array of the Global Middleware
 type Pod []MiddleWare
@@ -38,7 +33,7 @@ func (p *Pod) Glob(m ...http.HandlerFunc) {
 
 // Fuse, merge all the global middleware with the provided http.HandlerFunc
 func (p *Pod) Fuse(h http.HandlerFunc) PodFunc {
-	var stack PodHandler
+	var stack http.Handler
 	for i, m := range *p {
 		switch i {
 		case 0:
@@ -65,7 +60,7 @@ func (h PodFunc) Add(m ...http.HandlerFunc) http.Handler {
 
 // Mutate generate a valid handler a provided http.HandlerFunc
 func mutate(h http.HandlerFunc) MiddleWare {
-	return func(next PodHandler) PodHandler {
+	return func(next http.Handler) http.Handler {
 		return PodFunc(func(rw http.ResponseWriter, req *http.Request) {
 			h(rw, req)
 			next.ServeHTTP(rw, req)

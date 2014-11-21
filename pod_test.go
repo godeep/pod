@@ -18,6 +18,7 @@ func TestPod(t *testing.T) {
 	// No MiddleWare at All
 	http.Handle("/b", http.HandlerFunc(testHandler))
 
+	// Start Listening
 	http.ListenAndServe(":9000", nil)
 
 }
