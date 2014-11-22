@@ -38,8 +38,6 @@ func main() {
 	http.Handle("/home", po.Fuse(YourHandler))
 
 	// Add some middleware on a specific handler.
-	// po which is a PodFunc type have a method Add() to insert
-	// middleware on a specific handler.
 	http.Handle("/", po.Fuse(YourOtherHandler).Add(OtherMiddle)) 
 
 	// Start Listening
