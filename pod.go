@@ -26,38 +26,30 @@ func (p PodFunc) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 type MiddleWare func(http.Handler) http.Handler
 
 // Pod is the array of the Global Middleware
-type Pod []MiddleWare
-
-// NewPod create a new empty Pod
-func NewPod(m ...interface{}) func(http.HandlerFunc) PodFunc {
-	p := &Pod{}
-	if len(m) > 0 {
-		p.glob(m)
-	}
-	return p.fuse
+type Pod struct {
+	Handlers []MiddleWare
 }
 
-// Glob add some Global middleware to the Pod array
-func (p *Pod) glob(m []interface{}) {
-	if len(m) > 0 {
-		for _, f := range m {
-			switch v := f.(type) {
-			case func(http.ResponseWriter, *http.Request):
-				*p = append(*p, mutate(http.HandlerFunc(v)))
-			case func(http.Handler) http.Handler:
-				*p = append(*p, v)
-			default:
-				fmt.Println("[x] [", reflect.TypeOf(v), "] is not a valid MiddleWare Type.")
-			}
-		}
+// NewPod create a new empty Pod
+func NewPod(m ...interface{}) *Pod {
+	p := &Pod{}
+	p.wrap(m)
+	return p
+}
+
+// wrap add some Global middleware to the Pod.Handlers array
+func (p *Pod) wrap(m []interface{}) {
+	stack := toMiddleware(m)
+	for _, s := range stack {
+		p.Handlers = append(p.Handlers, s)
 	}
 }
 
 // Fuse, merge all the global middleware with the provided http.HandlerFunc
-func (p *Pod) fuse(h http.HandlerFunc) PodFunc {
-	if len(*p) > 0 {
+func (p *Pod) Fuse(h http.HandlerFunc) *PodFunc {
+	if len(p.Handlers) > 0 {
 		var stack http.Handler
-		for i, m := range *p {
+		for i, m := range p.Handlers {
 			switch i {
 			case 0:
 				stack = m(h)
@@ -65,38 +57,36 @@ func (p *Pod) fuse(h http.HandlerFunc) PodFunc {
 				stack = m(stack)
 			}
 		}
-
-		return PodFunc(stack.(http.HandlerFunc))
+		return stack.(*PodFunc)
 	}
-	return PodFunc(h)
+
+	ppc := PodFunc(h)
+	return &ppc
 }
 
 // Add some middleware to a particular handler
-func (p PodFunc) Add(m ...interface{}) http.Handler {
+func (p *PodFunc) Add(m ...interface{}) http.Handler {
 	var n http.Handler
 	if m != nil {
-		for i, x := range m {
-			switch v := x.(type) {
-			case func(http.ResponseWriter, *http.Request):
-				if i == 0 {
-					mi := mutate(v)
-					n = mi(PodFunc(p))
-				} else {
-					mi := mutate(v)
-					n = mi(n)
-				}
-			case func(http.Handler) http.Handler:
-				if i == 0 {
-					n = v(p)
-				} else {
-					n = v(n)
-				}
-			default:
-				fmt.Println("[x] [", reflect.TypeOf(v), "] is not a valid MiddleWare Type.")
+		stack := toMiddleware(m)
+		for i, s := range stack {
+			if i == 0 {
+				n = s(p)
+			} else {
+				n = s(n)
 			}
 		}
 	}
 	return n
+}
+
+func (p PodFunc) Schema(sc ...*Schema) *PodFunc {
+	for _, s := range sc {
+		for _, m := range *s {
+			p = m(p).(PodFunc)
+		}
+	}
+	return &p
 }
 
 // Mutate generate a valid handler with a provided http.HandlerFunc
@@ -107,4 +97,22 @@ func mutate(h http.HandlerFunc) MiddleWare {
 			next.ServeHTTP(rw, req)
 		})
 	}
+}
+
+// Get the interface type and transform to MiddleWare type.
+func toMiddleware(m []interface{}) []MiddleWare {
+	var stack []MiddleWare
+	if len(m) > 0 {
+		for _, f := range m {
+			switch v := f.(type) {
+			case func(http.ResponseWriter, *http.Request):
+				stack = append(stack, mutate(http.HandlerFunc(v)))
+			case func(http.Handler) http.Handler:
+				stack = append(stack, v)
+			default:
+				fmt.Println("[x] [", reflect.TypeOf(v), "] is not a valid MiddleWare Type.")
+			}
+		}
+	}
+	return stack
 }
