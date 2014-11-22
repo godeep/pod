@@ -23,13 +23,17 @@ package main
 import "github.com/squiidz/pod"
 
 func main() {
-	// Create a new Pod instance, and set some Global Middleware
+	// Create a new Pod instance, and set some Global Middleware.
+	// NewPod() return a PodFunc which can be use to wrap your handler
+	// with your Global middleware. PodFunc are use the same way as http.HandlerFunc.
 	po := pod.NewPod(GlobalMiddleWare)
 
 	// Wrap your global middleware with your handler
 	http.Handle("/home", po(YourHandler))
 
-	// And add some middleware on precise handler
+	// Add some middleware on a specific handler.
+	// po which is a PodFunc type have a method Add() to insert
+	// middleware on a specific handler.
 	http.Handle("/", po(YourOtherHandler).Add(OtherMiddle)) 
 
 	// Start Listening

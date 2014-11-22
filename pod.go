@@ -31,7 +31,9 @@ type Pod []MiddleWare
 // NewPod create a new empty Pod
 func NewPod(m ...interface{}) func(http.HandlerFunc) PodFunc {
 	p := &Pod{}
-	p.glob(m)
+	if len(m) > 0 {
+		p.glob(m)
+	}
 	return p.fuse
 }
 
