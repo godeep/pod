@@ -8,12 +8,10 @@ import (
 )
 
 func main() {
-	p := pod.NewPod()
+	po := pod.NewPod(GlobalMiddle, middle.Logger)
 
-	p.Glob(GlobalMiddle, middle.Logger)
-
-	http.Handle("/home", p.Fuse(HomeHandler).Add(HomeMiddle, Middle))
-	http.Handle("/", p.Fuse(Default))
+	http.Handle("/home", po(HomeHandler).Add(HomeMiddle, Middle))
+	http.Handle("/", po(Default))
 
 	http.ListenAndServe(":8080", nil)
 }
