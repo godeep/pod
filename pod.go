@@ -29,12 +29,14 @@ type MiddleWare func(http.Handler) http.Handler
 type Pod []MiddleWare
 
 // NewPod create a new empty Pod
-func NewPod() *Pod {
-	return &Pod{}
+func NewPod(m ...interface{}) func(http.HandlerFunc) PodFunc {
+	p := &Pod{}
+	p.glob(m)
+	return p.fuse
 }
 
 // Glob add some Global middleware to the Pod array
-func (p *Pod) Glob(m ...interface{}) {
+func (p *Pod) glob(m []interface{}) {
 	if len(m) > 0 {
 		for _, f := range m {
 			switch v := f.(type) {
@@ -50,7 +52,7 @@ func (p *Pod) Glob(m ...interface{}) {
 }
 
 // Fuse, merge all the global middleware with the provided http.HandlerFunc
-func (p *Pod) Fuse(h http.HandlerFunc) PodFunc {
+func (p *Pod) fuse(h http.HandlerFunc) PodFunc {
 	if len(*p) > 0 {
 		var stack http.Handler
 		for i, m := range *p {

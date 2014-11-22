@@ -23,17 +23,14 @@ package main
 import "github.com/squiidz/pod"
 
 func main() {
-	// Create a new Pod instance.
-	p := pod.NewPod()
-
-	// Set some Global Middleware
-	p.Glob(GlobalMiddleWare)
+	// Create a new Pod instance, and set some Global Middleware
+	po := pod.NewPod(GlobalMiddleWare)
 
 	// Wrap your global middleware with your handler
-	http.Handle("/home", p.Fuse(YourHandler))
+	http.Handle("/home", po(YourHandler))
 
 	// And add some middleware on precise handler
-	http.Handle("/", p.Fuse(YourOtherHandler).Add(OtherMiddle)) 
+	http.Handle("/", po(YourOtherHandler).Add(OtherMiddle)) 
 
 	// Start Listening
 	http.ListenAndServe(":8080", nil)
