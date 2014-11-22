@@ -3,7 +3,7 @@ Pod
 
 ## What is pod ?
 
-Pod is a simple Middleware chaining module, compatible with
+Pod is a Middleware chaining module, compatible with
 every mux who respect the ` http.Handler ` interface.
 
 ## Features
@@ -12,6 +12,7 @@ every mux who respect the ` http.Handler ` interface.
 - Support also ` func (http.Handler) http.Handler ` signature.
 - Middleware Chaining.
 - Global Middleware declaration.
+- Create Middleware Schema
 - Standard Lib compatibily
 - Compatible with every custom mux,
 who respect the ` http.Handler ` interface.
@@ -23,17 +24,23 @@ package main
 import "github.com/squiidz/pod"
 
 func main() {
-	// Create a new Pod instance.
-	p := pod.NewPod()
+	// Create a new Pod instance, and set some Global Middleware.
+	po := pod.NewPod(GlobalMiddleWare)
 
-	// Set some Global Middleware
-	p.Glob(GlobalMiddleWare)
+	// You can also, create a Schema(), which is a stack
+	// of MiddleWare for a specific task
+	auth := pod.NewSchema(CheckUser, CheckToken, ValidSession)
+
+	// You can pass multiple schema to the same Handler.
+	http.Handle("/account", po.Fuse(AccountHandler).Schema(auth).Add(random))
 
 	// Wrap your global middleware with your handler
-	http.Handle("/home", p.Fuse(YourHandler))
+	http.Handle("/home", po.Fuse(YourHandler))
 
-	// And add some middleware on precise handler
-	http.Handle("/", p.Fuse(YourOtherHandler).Add(OtherMiddle)) 
+	// Add some middleware on a specific handler.
+	// po which is a PodFunc type have a method Add() to insert
+	// middleware on a specific handler.
+	http.Handle("/", po.Fuse(YourOtherHandler).Add(OtherMiddle)) 
 
 	// Start Listening
 	http.ListenAndServe(":8080", nil)

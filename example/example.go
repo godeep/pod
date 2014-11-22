@@ -3,35 +3,34 @@ package main
 import (
 	"net/http"
 
-	"github.com/squiidz/fur/middle"
 	"github.com/squiidz/pod"
 )
 
 func main() {
-	p := pod.NewPod()
+	od := pod.NewPod()
+	test := pod.NewSchema(Middle, AuthMid)
+	auth := pod.NewSchema(AuthMid, Middle)
 
-	p.Glob(GlobalMiddle, middle.Logger)
+	http.Handle("/", od.Fuse(Default))
+	http.Handle("/home", od.Fuse(Home).Schema(auth, test).Add(Second))
 
-	http.Handle("/home", p.Fuse(HomeHandler).Add(HomeMiddle, Middle))
-	http.Handle("/", p.Fuse(Default))
-
-	http.ListenAndServe(":8080", nil)
-}
-
-func GlobalMiddle(rw http.ResponseWriter, req *http.Request) {
-	rw.Write([]byte("- GlobalMiddlware\n"))
+	http.ListenAndServe(":9000", nil)
 }
 
 func Default(rw http.ResponseWriter, req *http.Request) {
-	rw.Write([]byte("- Default"))
+	rw.Write([]byte("Default Handler\n"))
 }
 
-func HomeHandler(rw http.ResponseWriter, req *http.Request) {
-	rw.Write([]byte("- HomeHandler\n"))
+func Home(rw http.ResponseWriter, req *http.Request) {
+	rw.Write([]byte("Home Handler\n"))
 }
 
-func HomeMiddle(rw http.ResponseWriter, req *http.Request) {
-	rw.Write([]byte("- HomeMiddleware\n"))
+func Second(rw http.ResponseWriter, req *http.Request) {
+	rw.Write([]byte("Second Middleware\n"))
+}
+
+func AuthMid(rw http.ResponseWriter, req *http.Request) {
+	rw.Write([]byte("AuthMid Middleware\n"))
 }
 
 func Middle(next http.Handler) http.Handler {
