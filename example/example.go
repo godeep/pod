@@ -13,12 +13,17 @@ func main() {
 	p.Glob(GlobalMiddle, middle.Logger)
 
 	http.Handle("/home", p.Fuse(HomeHandler).Add(HomeMiddle, Middle))
+	http.Handle("/", p.Fuse(Default))
 
 	http.ListenAndServe(":8080", nil)
 }
 
 func GlobalMiddle(rw http.ResponseWriter, req *http.Request) {
 	rw.Write([]byte("- GlobalMiddlware\n"))
+}
+
+func Default(rw http.ResponseWriter, req *http.Request) {
+	rw.Write([]byte("- Default"))
 }
 
 func HomeHandler(rw http.ResponseWriter, req *http.Request) {

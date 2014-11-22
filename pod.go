@@ -1,3 +1,10 @@
+/**********************************
+***  Middleware Chaining in Go  ***
+***  Code is under MIT license  ***
+***    Code by CodingFerret     ***
+*** 	github.com/squiidz      ***
+***********************************/
+
 package pod
 
 import (
@@ -61,12 +68,28 @@ func (p *Pod) Fuse(h http.HandlerFunc) PodFunc {
 }
 
 // Add some middleware to a particular handler
-func (p PodFunc) Add(m ...http.HandlerFunc) http.Handler {
+func (p PodFunc) Add(m ...interface{}) http.Handler {
 	var n http.Handler
 	if m != nil {
-		for _, x := range m {
-			mi := mutate(x)
-			n = mi(PodFunc(p))
+		for i, x := range m {
+			switch v := x.(type) {
+			case func(http.ResponseWriter, *http.Request):
+				if i == 0 {
+					mi := mutate(v)
+					n = mi(PodFunc(p))
+				} else {
+					mi := mutate(v)
+					n = mi(n)
+				}
+			case func(http.Handler) http.Handler:
+				if i == 0 {
+					n = v(p)
+				} else {
+					n = v(n)
+				}
+			default:
+				fmt.Println("[x] [", reflect.TypeOf(v), "] is not a valid MiddleWare Type.")
+			}
 		}
 	}
 	return n
